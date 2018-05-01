@@ -8,8 +8,6 @@ import {
   Image
 } from 'react-native';
 
-import Article from '../Article';
-
 export default class ItemView extends Component {
 
   render() {

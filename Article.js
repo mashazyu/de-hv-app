@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 
-import { View, ScrollView, Image, StyleSheet, Button, WebView, Platform } from 'react-native';
+import { View, Image, ScrollView, StyleSheet, Button, WebView, TouchableWithoutFeedback } from 'react-native';
 
 import HTMLView from 'react-native-htmlview';
 import HTMLParser from 'cheerio-without-node-native';
 import { Asset, Audio, Font, Video } from 'expo';
 
-export default class ItemView extends Component {
+export default class Article extends Component {
 
   static navigationOptions = ({ navigation }) => {
     const { params } = navigation.state;
@@ -58,8 +58,17 @@ export default class ItemView extends Component {
   }
 
   onMessage(event) {
-    console.warn(event.nativeEvent.data. data);
     debugger;
+    let msgData;
+       try {
+           msgData = JSON.parse(event.nativeEvent.data);
+       }
+       catch(err) {
+           console.warn(err);
+           return;
+       }
+    //console.warn(event.nativeEvent.data. data);
+
   }
 
   componentWillMount() {
@@ -75,7 +84,7 @@ export default class ItemView extends Component {
         const title = $('div[class=text]>h1').html();
         const subtitle = $('p[class=subtitle]').html();
         const text = $('div[class=articlemain]').html();
-
+        debugger;
         this.setState({title, subtitle, text});
       })
       .catch((error) => {
@@ -101,8 +110,6 @@ export default class ItemView extends Component {
         </div>
       </body>`;
 
-    console.warn(article);
-
     if (text) {
       return (
         <View style={styles.container}>
@@ -113,13 +120,14 @@ export default class ItemView extends Component {
             title={isPlaying ? "Pause" : "Play"}
             color="darkgray"
           />
-
-          <WebView
-            ref={( webView ) => this.webView = webView}
-            source={{html: article}} style={styles.webView}
-            scalesPageToFit={(Platform.OS === 'ios') ? false : true}
-            onMessage={this.onMessage}
-          />
+          <TouchableWithoutFeedback
+            onLongPress={this.onMessage}
+          >
+            <WebView
+              source={{html: article}}
+              style={styles.webView}
+            />
+          </TouchableWithoutFeedback>
 
         </View>
       );
@@ -135,7 +143,7 @@ export default class ItemView extends Component {
 
   }
 
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -169,14 +177,15 @@ const script = `
     }
 
     function returnSelectedText() {
+      alert('touch end');
        var selectedText = getSelectedText();
        if (selectedText) {
-           window.postMessage( selectedText);
+         windows.postMessage(selectedText);
+         alert(selectedText);
        }
     }
 
-    document.onmouseup = returnSelectedText;
-    document.onkeyup = returnSelectedText;
+    document.ontouchend = returnSelectedText;
 
   </script>`
 ;
