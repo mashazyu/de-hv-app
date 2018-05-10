@@ -1,15 +1,25 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 
-import { View, Image, ScrollView, StyleSheet, Button, WebView, TouchableWithoutFeedback } from 'react-native';
+import {View, ScrollView, StyleSheet, Button, Vibration} from 'react-native';
 
 import HTMLView from 'react-native-htmlview';
 import HTMLParser from 'cheerio-without-node-native';
-import { Asset, Audio, Font, Video } from 'expo';
+import {Audio} from 'expo';
+
+import ModalWindow from './ModalWindow';
+import AppContainer from './AppComponents/AppContainer';
+import AppLoader from './AppComponents/AppLoader';
+import AppText from './AppComponents/AppText';
+import AppScrollView from './AppComponents/AppScrollView';
+
+
+import wWStyles from './assets/wWStyles';
+const YandexURL = 'https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=dict.1.1.20180416T105832Z.f4d83a6bdace48bc.58158ca3eacfe99c2170cd7f0253c21afb460de6&lang=de-en&text=';
 
 export default class Article extends Component {
 
   static navigationOptions = ({ navigation }) => {
-    const { params } = navigation.state;
+    const {params} = navigation.state;
 
     return {
       title: params ? params.title : 'Article',
@@ -25,12 +35,15 @@ export default class Article extends Component {
       sound: undefined,
       isPlaying: false,
       positionMillis: 0,
+      isModalVisible: false,
+      translation: '',
+      selection: '',
+      isLoading: false,
     };
 
-    this.webView = null;
-
     this.onPress = this.onPress.bind(this);
-    //this.onMessage = this.onMessage.bind(this);
+    this.onSelect = this.onSelect.bind(this);
+    this.setTranslation = this.setTranslation.bind(this);
   }
 
   async onPress() {
@@ -57,177 +70,133 @@ export default class Article extends Component {
 
   }
 
-  onMessage(event) {
-    debugger;
-    let msgData;
-       try {
-           msgData = JSON.parse(event.nativeEvent.data);
-       }
-       catch(err) {
-           console.warn(err);
-           return;
-       }
-    //console.warn(event.nativeEvent.data. data);
+  setTranslation(translation) {
+    this.setState({ isModalVisible: true, translation });
+  }
+
+  getTranslation(def, selection) {
+    return def.length && def[0].tr.length
+      ? `${def[0].tr[0].text}`
+      : `Yandex has no idea :(`;
+  }
+
+  onSelect(selection) {
+
+    Vibration.vibrate(100);
+    this.setState({selection});
+
+    fetch(`${YandexURL}${selection}`)
+      .then((response) => response.json())
+      .then(({def}) => this.getTranslation(def, selection))
+      .then(this.setTranslation)
+      .catch(this.setTranslation);
+  }
+
+  removeSymbols(word) {
+    let updatedWord;
+
+    // process to plain text
+    const $ = HTMLParser.load(word);
+    updatedWord = $.root().text();
+
+    // remove ,."",''
+    updatedWord = updatedWord.replace(/[,\.?!"':;<>]/gim, '');
+
+    return updatedWord;
+
+  }
+
+  addLinks(html) {
+
+    if (html) {
+      const htmlArray = html.split(' ');
+
+      const htmlArrayWithLinks = htmlArray.map(word => {
+        const ref = this.removeSymbols(word);
+        return `<a href="${ref}">${word}</a>`;
+      });
+
+      return htmlArrayWithLinks.join(' ');
+    } else {
+      return 'This article is empty :(';
+    }
 
   }
 
   componentWillMount() {
 
-    const { articleURL } = this.props.navigation.state.params;
+    const { articleURL, title } = this.props.navigation.state.params;
+
+    this.setState({isLoading: true});
 
     if (articleURL) {
       fetch(articleURL)
       .then((response) => response.text())
       .then((htmlRaw) => {
         const $ = HTMLParser.load(htmlRaw, {normalizeWhitespace: true});
-
-        const title = $('div[class=text]>h1').html();
-        const subtitle = $('p[class=subtitle]').html();
+        //title = this.addLinks(title);
+        //const title = $('div[class=text]>h1').html();
+        const subtitle = this.addLinks($('p[class=subtitle]').html());
         const text = $('div[class=articlemain]').html();
-        debugger;
-        this.setState({title, subtitle, text});
+
+        this.setState({title, subtitle, text, isLoading: false});
       })
       .catch((error) => {
-        console.error(error);
+        this.setState({text: JSON.stringify(error), isLoading: false});
+        //console.error(error);
       });
     }
 
   }
 
+  closeModal() {
+    this.setState({isModalVisible: false});
+  }
+
   render() {
 
-    const { title, subtitle, text, isPlaying } = this.state;
+    const { title, subtitle, text, isPlaying, translation, isModalVisible, selection, isLoading } = this.state;
     const article =
-      `<head>
-        ${htmlStyle}
-      </head>
-      <body>
-        ${script}
-        <div class="container">
-          <h1>${title}</h1>
-          <p class="subtitle">${subtitle}</p>
-          ${text}
-        </div>
-      </body>`;
+      `<div class="article">
+        <h1>${title}</h1>
+        <p class="subtitle">${subtitle}</p>
+        ${text}
+      </div>`;
 
-    if (text) {
-      return (
-        <View style={styles.container}>
+    return (
+      <AppContainer>
 
-          <Button
-            onPress={this.onPress}
-            style={styles.button}
-            title={isPlaying ? "Pause" : "Play"}
-            color="darkgray"
-          />
-          <TouchableWithoutFeedback
-            onLongPress={this.onMessage}
-          >
-            <WebView
-              source={{html: article}}
-              style={styles.webView}
+        {(isLoading) && <AppLoader />}
+        {(!isLoading) && (<View>
+            <Button
+              onPress={this.onPress}
+              color="darkgray"
+              title={isPlaying ? "Pause" : "Play"}
             />
-          </TouchableWithoutFeedback>
+            <AppScrollView style={styles.container}>
+              <HTMLView
+                value={article}
+                stylesheet={wWStyles}
+                onLinkPress={this.onSelect}
+                onLinkLongPress={this.onSelect}
+              />
+            </AppScrollView>
+            <ModalWindow
+              translation={translation}
+              selection={selection}
+              isVisible={isModalVisible}
+              closeModal={this.closeModal}
+            />
+          </View>)}
 
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.imageContainter}>
-          <Image
-            source={{uri: 'https://media.giphy.com/media/WFaqdvA0lS8fu/giphy.gif'}}
-          />
-        </View>
-      );
-    }
-
+      </AppContainer>
+    );
   }
 
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
-  webView: {
-    flex: 1,
-
-  },
-  button: {
-    color: 'darkgray',
-  },
-  imageContainter: {
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
 });
-
-const script = `
-  <script>
-
-    function getSelectedText() {
-       var text = "";
-       if (typeof window.getSelection != "undefined") {
-           text = window.getSelection().toString();
-       } else if (typeof document.selection != "undefined" && document.selection.type == "Text") {
-           text = document.selection.createRange().text;
-       }
-       return text;
-    }
-
-    function returnSelectedText() {
-      alert('touch end');
-       var selectedText = getSelectedText();
-       if (selectedText) {
-         windows.postMessage(selectedText);
-         alert(selectedText);
-       }
-    }
-
-    document.ontouchend = returnSelectedText;
-
-  </script>`
-;
-
-const htmlStyle = `<style>
-  h1 {
-    font-size: 25;
-    font-family: sans-serif-thin;
-    color: darkgray;
-    margin-top: 20;
-  }
-  h3 {
-    font-size: 20;
-    font-family: sans-serif-thin;
-    font-weight: bold;
-    color: darkgray;
-    margin-top: 20;
-    margin-bottom: 20;
-  }
-  p {
-    font-size: 17;
-    font-family: sans-serif-thin;
-    color: darkgray;
-    margin-top: 20;
-    line-height: 150%;
-  }
-
-  .container {
-    margin: 20px;
-    text-align: justify;
-  }
-
-  .overline {
-    display: block;
-    font-size: 23;
-    font-family: sans-serif-thin;
-    font-weight: bold;
-    color: darkgray;
-    margin-bottom: 20px;
-  }
-
-  .subtitle {
-    font-style: italic;
-  }
-</style>`;

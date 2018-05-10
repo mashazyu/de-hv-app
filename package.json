@@ -23,6 +23,7 @@
     "expo": "^26.0.0",
     "react": "16.3.0",
     "react-native": "~0.54.1",
+    "react-native-extended-stylesheet": "^0.8.1",
     "react-native-html-parser": "0.0.5",
     "react-native-htmlview": "^0.12.1",
     "react-native-render-html": "^3.9.3",

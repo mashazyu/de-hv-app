@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 
+import AppText from '../AppComponents/AppText';
+import AppTile from '../AppComponents/AppTile';
+
 import {
   StyleSheet,
   TouchableOpacity,
-  Text,
-  View,
-  Image
+  View
 } from 'react-native';
 
 export default class ItemView extends Component {
@@ -15,25 +16,39 @@ export default class ItemView extends Component {
     const {title, description, articleURL, audioURL, onPress} = this.props;
 
     return (
-      <View>
+      /*<View>
         <TouchableOpacity
           onPress={onPress(articleURL, audioURL, title)}
           >
           <View style={styles.container}>
-            <Text style={styles.title}>
+            <AppText style={styles.title}>
               {title}
-            </Text>
-             <Text style={styles.description}>
+            </AppText>
+             <AppText>
               {description}
-            </Text>
+            </AppText>
           </View>
          </TouchableOpacity>
-       </View>
+       </View>*/
+       <AppTile
+        name={title}
+        style={styles.tile}
+        description={description}
+        onPress={onPress(articleURL, audioURL, title)}
+      >
+      </AppTile>
      );
  }
 }
 
 const styles = StyleSheet.create({
+  tile: {
+    width: '85%',
+    justifyContent: 'flex-start',
+    flex: 1,
+    alignItems: 'stretch',
+    flexDirection: 'column',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -55,4 +70,4 @@ const styles = StyleSheet.create({
     textAlign: 'justify',
     marginTop: 25,
   },
-})
+});

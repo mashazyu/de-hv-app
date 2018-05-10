@@ -1,33 +1,44 @@
-import React, { Component } from 'react';
-import { StyleSheet, ScrollView, Image, View } from 'react-native';
+import React, {Component} from 'react';
+import {StyleSheet, ScrollView} from 'react-native';
 import XMLParser from 'react-xml-parser';
 import HTMLParser from 'cheerio-without-node-native';
 
 import ItemView from './ItemView/ItemView';
+import AppContainer from './AppComponents/AppContainer';
+import AppLoader from './AppComponents/AppLoader';
+import AppScrollView from './AppComponents/AppScrollView';
 
 export default class PodcastList extends Component {
 
-  static navigationOptions = {
-    title: 'Podcasts',
-  };
+  static navigationOptions = ({ navigation }) => {
+    const {params} = navigation.state;
+
+    return {
+      title: params ? params.name : 'Podcast',
+    }
+  }
 
   constructor(props) {
-
     super(props);
     this.state = {
-      itemList: []
+      itemList: [],
+      isLoading: false,
     };
 
   }
 
   componentWillMount() {
 
-    return fetch('http://www.deutschlandfunk.de/podcast-deutschlandfunk-der-tag.3417.de.podcast.xml')
+    this.setState({isLoading: true});
+
+    const {url} = this.props.navigation.state.params;
+
+    return fetch(url)
     .then((response) => response.text())
     .then((data) => {
       const xml = new XMLParser().parseFromString(data);
       const itemList = xml.getElementsByTagName("item");
-      this.setState({itemList});
+      this.setState({itemList, isLoading: false});
     })
     .catch((error) => {
       console.error(error);
@@ -63,63 +74,50 @@ export default class PodcastList extends Component {
     return $.root().text();
   }
 
+  correctLength(string) {
+    return (string.length < 260) ? string : `${string.substr(0, 260)}...`;
+  }
+
   returnItemList() {
+    const {itemList} = this.state;
 
-    const {itemList}=this.state;
+    return itemList.map((item, key) => {
+      const artU = this.getValue(item, 'link');
+      const audU = this.getValue(item, 'guid');
 
-    if (itemList.length>0) {
-      return itemList.map((item, key) => {
-        const artU = this.getValue(item, 'link');
-        const audU = this.getValue(item, 'guid');
+      let title = this.getValue(item, 'title');
+      title = this.parseHTML(title);
 
-        let title = this.getValue(item, 'title');
-        title = this.parseHTML(title);
+      let description = this.getValue(item, 'description');
+      description = this.removeBrTag(description);
+      description = this.parseHTML(description);
+      description = this.correctLength(description);
 
-        let description = this.getValue(item, 'description');
-        description = this.removeBrTag(description);//description.replace(/<br(\s[a-z]+\=\"[a-z]+\")?\s\/>/g, '');//remove <br />
-        description = this.parseHTML(description);
-
-        return (
-          <ItemView
-            key={key}
-            title={title}
-            description={description}
-            articleURL={artU}
-            audioURL={audU}
-            onPress={() => this.onPress.bind(this, artU, audU, title)}
-          />
-        );
-      });
-    } else {
       return (
-        <View style={styles.imageContainter}>
-          <Image
-
-            source={{uri: 'https://media.giphy.com/media/WFaqdvA0lS8fu/giphy.gif'}}
-          />
-        </View>
+        <ItemView
+          key={key}
+          title={title}
+          description={description}
+          articleURL={artU}
+          audioURL={audU}
+          onPress={() => this.onPress.bind(this, artU, audU, title)}
+        />
       );
-    }
-
+    });
   }
 
   render() {
+    const {itemList, isLoading} = this.state;
 
     return (
-      <ScrollView style={styles.container}>
-        {this.returnItemList()}
-      </ScrollView>
+      <AppContainer>
+        {(itemList.length > 0) && (!isLoading) &&
+          <AppScrollView>
+            {this.returnItemList()}
+          </AppScrollView>}
+        {(itemList.length === 0) && (isLoading) && <AppLoader />}
+      </AppContainer>
     );
   }
 
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginTop: 20,
-  },
-  imageContainter: {
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-})

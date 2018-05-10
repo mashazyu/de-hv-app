@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
 import {Modal, Text, TouchableHighlight, View} from 'react-native';
 
+import AppText from './AppComponents/AppText';
+
 export default class ModalWindow extends Component {
 
   constructor(props) {
@@ -19,22 +21,29 @@ export default class ModalWindow extends Component {
 
   render() {
 
-    const {translation, closeModal} =  this.props;
+    const {selection, translation, closeModal} =  this.props;
     const {modalVisible} = this.state;
 
+    console.log('///modalVisible', modalVisible);
+
     return (
-      <View style={{marginTop: 22}}>
+      <View style={{marginTop: 10, marginBottom: 15}}>
         <Modal
           animationType="slide"
           transparent={false}
           visible={modalVisible}
-          onRequestClose={() => {}}
-          onBackButtonPress={() => {
+          onRequestClose={() => {
             this.setModalVisible(!modalVisible);
-          }}>
-          <View style={{marginTop: 22}}>
+          }}
+          >
+          <View style={{marginTop: 10}}>
             <View>
-              <Text>{translation}</Text>
+              <AppText style={{textAlign: 'center'}}>
+                <AppText style={{fontWeight: 'bold'}}>
+                  {selection}
+                </AppText>
+                 - {translation}
+              </AppText>
 
               <TouchableHighlight
                 onPress={() => {
@@ -50,7 +59,12 @@ export default class ModalWindow extends Component {
           onPress={() => {
             this.setModalVisible(true);
           }}>
-          <Text>Show Modal</Text>
+          <AppText style={{textAlign: 'center'}}>
+            <AppText style={{fontWeight: 'bold'}}>
+              {selection }
+            </AppText>
+             - {translation}
+          </AppText>
         </TouchableHighlight>
       </View>
     );

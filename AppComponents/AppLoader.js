@@ -1,22 +1,22 @@
 // https://medium.com/@moschan/style-inheritance-of-react-native-eca1c974f02b
-import React, { Component } from 'react';
-import { Image, StyleSheet } from 'react-native';
+import React, {Component} from 'react';
+import {Image, StyleSheet} from 'react-native';
 
 export default class AppLoader extends Component {
   render() {
     return (
-      <View {...this.props} style={[styles.container, this.props.style]}>
-        <Image source={require('../assets/_preloader.gif')} />
-      </View>
-    )
+        <Image
+          {...this.props} style={[styles.image, this.props.style]}
+          resizeMode='contain'
+          source={require('../assets/_preloader.gif')}
+        />
+    );
   }
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
+  image: {
+    alignSelf: 'center',
+    width: '100%',
   },
 });
