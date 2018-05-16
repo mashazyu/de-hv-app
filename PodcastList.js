@@ -75,7 +75,7 @@ export default class PodcastList extends Component {
   }
 
   correctLength(string) {
-    return (string.length < 260) ? string : `${string.substr(0, 260)}...`;
+    return (string.length < 260) ? string : `${string.substr(0, 220)}...`;
   }
 
   returnItemList() {

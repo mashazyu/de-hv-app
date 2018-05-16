@@ -34,7 +34,7 @@ export default class PodcastsOverview extends Component {
         <FlatList
           data={podcastsDLF}
           numColumns={2}
-          style={styles.list}
+          contentContainerStyle={styles.list}
           bounces={true}
           keyExtractor={(item, index) => index}
           renderItem={({item}) => <AppTile name={item.name} onPress={this.onPress}></AppTile>} />

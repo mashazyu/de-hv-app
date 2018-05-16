@@ -9,7 +9,7 @@ export default class AppScrollView extends Component {
     return (
       <ScrollView
         {...this.props}
-        style={[styles.scrollView, this.props.style]}
+        contentContainerStyle={[styles.scrollView, this.props.style]}
         bounces={true}
         >
         {this.props.children}

@@ -1,17 +1,17 @@
 import React, {Component} from 'react';
 
-import {View, ScrollView, StyleSheet, Button, Vibration} from 'react-native';
+import {View, StyleSheet, Vibration} from 'react-native';
 
 import HTMLView from 'react-native-htmlview';
 import HTMLParser from 'cheerio-without-node-native';
 import {Audio} from 'expo';
 
-import ModalWindow from './ModalWindow';
+import AppModal from './AppComponents/AppModal';
 import AppContainer from './AppComponents/AppContainer';
 import AppLoader from './AppComponents/AppLoader';
 import AppText from './AppComponents/AppText';
 import AppScrollView from './AppComponents/AppScrollView';
-
+import AppButton from './AppComponents/AppButton';
 
 import wWStyles from './assets/wWStyles';
 const YandexURL = 'https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=dict.1.1.20180416T105832Z.f4d83a6bdace48bc.58158ca3eacfe99c2170cd7f0253c21afb460de6&lang=de-en&text=';
@@ -37,7 +37,7 @@ export default class Article extends Component {
       positionMillis: 0,
       isModalVisible: false,
       translation: '',
-      selection: '',
+      selection: 'Tap word to get translation',
       isLoading: false,
     };
 
@@ -76,8 +76,8 @@ export default class Article extends Component {
 
   getTranslation(def, selection) {
     return def.length && def[0].tr.length
-      ? `${def[0].tr[0].text}`
-      : `Yandex has no idea :(`;
+      ? def//`${def[0].tr[0].text}`
+      : undefined;//`Yandex has no idea :(`;
   }
 
   onSelect(selection) {
@@ -143,7 +143,7 @@ export default class Article extends Component {
       })
       .catch((error) => {
         this.setState({text: JSON.stringify(error), isLoading: false});
-        //console.error(error);
+
       });
     }
 
@@ -168,10 +168,9 @@ export default class Article extends Component {
 
         {(isLoading) && <AppLoader />}
         {(!isLoading) && (<View>
-            <Button
+            <AppButton
               onPress={this.onPress}
-              color="darkgray"
-              title={isPlaying ? "Pause" : "Play"}
+              text={isPlaying ? "Pause" : "Play"}
             />
             <AppScrollView style={styles.container}>
               <HTMLView
@@ -181,7 +180,8 @@ export default class Article extends Component {
                 onLinkLongPress={this.onSelect}
               />
             </AppScrollView>
-            <ModalWindow
+            <AppModal
+              animationType="fade"
               translation={translation}
               selection={selection}
               isVisible={isModalVisible}

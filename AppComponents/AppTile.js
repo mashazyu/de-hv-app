@@ -1,6 +1,6 @@
 // https://medium.com/@moschan/style-inheritance-of-react-native-eca1c974f02b
 import React, {Component} from 'react';
-import {StyleSheet, View, TouchableOpacity, Dimensions} from 'react-native';
+import {StyleSheet, View, TouchableOpacity, Dimensions, Platform} from 'react-native';
 import AppTitleText from './AppTitleText';
 import AppText from './AppText';
 
